@@ -105,6 +105,11 @@ class ToDoListViewController: UITableViewController {
     }
     //MARK: TableViewDelegate Methods
     override func tableView(_ tableView: UITableView, didSelectRowAt indexPath: IndexPath) {
+        //DELETE from Container
+       // context.delete(itemArray[indexPath.row])
+        //DELETE from array
+      //  itemArray.remove(at: indexPath.row)
+        //UPDATE "done" property
 itemArray[indexPath.row].done = !itemArray[indexPath.row].done
        //*************************************
         /* if itemArray[indexPath.row].done == false{
