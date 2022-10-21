@@ -14,6 +14,11 @@ class ToDoListViewController: UITableViewController{
     @IBOutlet weak var searchBar: UISearchBar!
     //var itemArray = ["Book","Pen","Pencil"]
     var itemArray = [Item]()
+    var selectedCategory : Category?{
+        didSet{
+            loadItem()
+        }
+    }
     //first item in the array
     //home directory : .userDomainMask
     // let dataFilePath = FileManager.default.urls(for: .documentDirectory, in: .userDomainMask).first?.appendingPathComponent("Items.plist")
@@ -26,7 +31,7 @@ class ToDoListViewController: UITableViewController{
         super.viewDidLoad()
         // Do any additional setup after loading the view.
         //making IBOUTLET for UISearchBar and then setting outlet delegate as self
-         searchBar.delegate = self
+        searchBar.delegate = self
         
         // print(dataFilePath)
         // print(FileManager.default.urls(for: .documentDirectory, in: .userDomainMask))
@@ -47,7 +52,7 @@ class ToDoListViewController: UITableViewController{
          itemArray = items
          }*/
         //retrieve data
-        loadItem()
+        //loadItem()
         
     }
     //MARK: - additem while pressing + button
@@ -70,6 +75,7 @@ class ToDoListViewController: UITableViewController{
             
             newItem.title = textField.text!
             newItem.done = false
+            newItem.parentCategory = self.selectedCategory
             self.itemArray.append(newItem)
             self.saveData()
             //persist data using UserDefaults -- App crash for custom object
@@ -148,8 +154,14 @@ class ToDoListViewController: UITableViewController{
         }
         self.tableView.reloadData();
     }
-    func loadItem(with request : NSFetchRequest<Item> = Item.fetchRequest()){
+    func loadItem(with request : NSFetchRequest<Item> = Item.fetchRequest(), predicate:NSPredicate? = nil){
+        let categoryPredicate = NSPredicate(format:"parentCategory.name MATCHES %@", selectedCategory!.name!)
         
+        if let additionalPredicate = predicate{
+            request.predicate = NSCompoundPredicate(andPredicateWithSubpredicates: [categoryPredicate,additionalPredicate])
+        }else{
+            request.predicate = categoryPredicate
+        }
         
         do{
             itemArray = try context.fetch(request)
@@ -160,56 +172,57 @@ class ToDoListViewController: UITableViewController{
         }
         tableView.reloadData()
     }
-    //MARK: - Encoding data with NSEncoder
-    /* func saveData(){
-     //  let encoder = PropertyListEncoder()
-     do{
-     // let data = try encoder.encode(itemArray)
-     // try data.write(to: dataFilePath!)
-     }
-     catch{
-     print("Error encoding data \(error)")
-     }
-     self.tableView.reloadData();
-     }*/
-    /*func loadItem(){
-     if let data = try? Data(contentsOf: dataFilePath!){
-     let decoder = PropertyListDecoder()
-     do{
-     itemArray = try decoder.decode([Item].self, from: data)
-     }
-     catch{
-     print("Error \(error)")
-     }
-     }
-     }*/
-}
     
-//MARK: - UISearchBarDelegate delegate method
-extension ToDoListViewController: UISearchBarDelegate{
-    //querying data
-    func searchBarSearchButtonClicked(_ searchBar: UISearchBar) {
-        //new request
-        let request:NSFetchRequest<Item> = Item.fetchRequest()
-        print("Searchbar Pressed",searchBar.text!)
-        //NSPredicate specifies how data should be filtered or fetched
-        
-        request.predicate =  NSPredicate(format: "title CONTAINS[cd] %@", searchBar.text!)
-        //sort descriptor
-        request.sortDescriptors = [NSSortDescriptor(key: "title", ascending: true)]
-        
-         
-        //fetch from persistent container
-        loadItem(with: request)
-    }
+    
+}
+    //MARK: - UISearchBarDelegate delegate method
+    
+    extension ToDoListViewController: UISearchBarDelegate{
+        //querying data
+        func searchBarSearchButtonClicked(_ searchBar: UISearchBar) {
+            //new request
+            let request:NSFetchRequest<Item> = Item.fetchRequest()
+            print("Searchbar Pressed", searchBar.text!)
+            //NSPredicate specifies how data should be filtered or fetched
+            
+            let predicate =  NSPredicate(format: "title CONTAINS[cd] %@", searchBar.text!)
+            //sort descriptor
+            request.sortDescriptors = [NSSortDescriptor(key: "title", ascending: true)]
+            
+            
+            //fetch from persistent container
+            loadItem(with: request, predicate: predicate)
+        }
     func searchBar(_ searchBar: UISearchBar, textDidChange searchText: String) {
-        if searchBar.text?.count == 0{
-            loadItem()
-            DispatchQueue.main.async {
-                searchBar.resignFirstResponder()
+            if searchBar.text?.count == 0{
+                loadItem()
+                DispatchQueue.main.async {
+                    searchBar.resignFirstResponder()
+                }
             }
         }
-    }
-    
-    
 }
+    
+//MARK: - Encoding data with NSEncoder
+/* func saveData(){
+ //  let encoder = PropertyListEncoder()
+ do{
+ // let data = try encoder.encode(itemArray)
+ // try data.write(to: dataFilePath!)
+ }
+ catch{
+ print("Error encoding data \(error)")
+ }
+ self.tableView.reloadData();
+ }*/
+/*func loadItem(){
+ if let data = try? Data(contentsOf: dataFilePath!){
+ let decoder = PropertyListDecoder()
+ do{
+ itemArray = try decoder.decode([Item].self, from: data)
+ }
+ catch{
+ print("Error \(error)")
+ }
+ }
+ }*/
