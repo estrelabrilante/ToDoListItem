@@ -16,7 +16,7 @@ class CategoryViewController: SwipeTableViewController {
     var categoryArray: Results<Category>?
     override func viewDidLoad() {
         super.viewDidLoad()
-        tableView.rowHeight = 100
+    
         // loadCategory()
         //load all category
         loadCategories()
@@ -41,6 +41,7 @@ class CategoryViewController: SwipeTableViewController {
         //comes from super class
         let cell1 = super.tableView(tableView, cellForRowAt: indexPath)
         cell1.textLabel?.text = categoryArray?[indexPath.row].name ?? "No categories added"
+        cell1.backgroundColor = UIColor(hexString: categoryArray?[indexPath.row].colourString ?? "1D98F6")
         return cell1
     }
     @IBAction func addButtonPressed(_ sender: UIBarButtonItem) {
@@ -52,6 +53,7 @@ class CategoryViewController: SwipeTableViewController {
             //  let newCategory = Category(context: self.context)
             let newCategory = Category()
             newCategory.name = textField.text!
+            newCategory.colourString = UIColor.randomFlat().hexValue()
             self.save(category: newCategory)  //Write Realm
             
             //no need to append as it autoupdate in Realm
