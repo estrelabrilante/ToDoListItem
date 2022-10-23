@@ -9,24 +9,26 @@
 import UIKit
 //import CoreData
 import RealmSwift
+//import SwipeCellKit
 
-class CategoryViewController: UITableViewController {
+class CategoryViewController: SwipeTableViewController {
     let realm = try! Realm()
     var categoryArray: Results<Category>?
     override func viewDidLoad() {
         super.viewDidLoad()
-       // loadCategory()
+        tableView.rowHeight = 100
+        // loadCategory()
         //load all category
         loadCategories()
         
     }
-   //array of NSManaged Object : created using entity
+    //array of NSManaged Object : created using entity
     
     //var categoryArray = [Category]()
     //datatype: Results
     
     //communicate with persistent container-- COREDATA
-  //  let context = (UIApplication.shared.delegate as! AppDelegate).persistentContainer.viewContext
+    //  let context = (UIApplication.shared.delegate as! AppDelegate).persistentContainer.viewContext
     
     //MARK: - TABLEVIEW DATASOURCE METHODS
     override func tableView(_ tableView: UITableView, numberOfRowsInSection section: Int) -> Int {
@@ -34,8 +36,11 @@ class CategoryViewController: UITableViewController {
         return categoryArray?.count ?? 1
     }
     override func tableView(_ tableView: UITableView, cellForRowAt indexPath: IndexPath) -> UITableViewCell {
-        let cell1 = self.tableView.dequeueReusableCell(withIdentifier: "CategoryCell", for: indexPath)
- cell1.textLabel?.text = categoryArray?[indexPath.row].name ?? "No categories added"
+       // let cell1 = self.tableView.dequeueReusableCell(withIdentifier: "CategoryCell", for: indexPath) as! SwipeTableViewCell
+       // cell1.delegate = self
+        //comes from super class
+        let cell1 = super.tableView(tableView, cellForRowAt: indexPath)
+        cell1.textLabel?.text = categoryArray?[indexPath.row].name ?? "No categories added"
         return cell1
     }
     @IBAction func addButtonPressed(_ sender: UIBarButtonItem) {
@@ -50,9 +55,9 @@ class CategoryViewController: UITableViewController {
             self.save(category: newCategory)  //Write Realm
             
             //no need to append as it autoupdate in Realm
-        //    self.categoryArray.append(newCategory)
-           // self.saveCategory()
-           
+            //    self.categoryArray.append(newCategory)
+            // self.saveCategory()
+            
             
         }
         alert.addTextField{(field) in
@@ -63,32 +68,47 @@ class CategoryViewController: UITableViewController {
         present(alert,animated: true,completion: nil)
         
     }
-        //MARK: - DATA MANIPULATING METHODS
+    //MARK: - DATA MANIPULATING METHODS
     //Save Realm Database
     func save(category:Category){
-            do{
-                try realm.write
-                {
-                    realm.add(category)
-                    
-                }
-                print("saved to database : Category")
+        do{
+            try realm.write
+            {
+                realm.add(category)
+                
             }
-            catch{
-                print("Error while saving context \(error)")
-            }
-            //tableView update with new data
-            self.tableView.reloadData();
+            print("saved to database : Category")
+        }
+        catch{
+            print("Error while saving context \(error)")
+        }
+        //tableView update with new data
+        self.tableView.reloadData();
     }
     func loadCategories(){
         //pull all of Category OBject
         categoryArray = realm.objects(Category.self)
         tableView.reloadData()
     }
-  
+    //MARK: - Delete data from swipe
+    
+    override func updateModel(at indexPath: IndexPath) {
+        super.updateModel(at: indexPath)
+        if let categoryForDeletion = self.categoryArray?[indexPath.row]{
+                do{
+                    try self.realm.write{
+                    self.realm.delete(categoryForDeletion)
+                    }
+                }
+                catch{
+                    print("Error while deleting row,\(error)")
+                }
+            }
         
-        //MARK: - TABLEVIEW DELEGATE METHODS
-        
+    }
+    
+    //MARK: - TABLEVIEW DELEGATE METHODS
+    
     override func tableView(_ tableView: UITableView, didSelectRowAt indexPath: IndexPath) {
         performSegue(withIdentifier: "goToItems", sender: self)
     }
@@ -98,6 +118,42 @@ class CategoryViewController: UITableViewController {
             destinationVC.selectedCategory = categoryArray?[indexPath.row]
         }
     }
+}
+//MARK: - SWIPECELLKIT COCOAPODS
+/*
+ extension CategoryViewController: SwipeTableViewCellDelegate{
+    func tableView(_ tableView: UITableView, editActionsForRowAt indexPath: IndexPath, for orientation: SwipeActionsOrientation) -> [SwipeAction]? {
+        guard orientation == .right else { return nil }
+        
+        let deleteAction = SwipeAction(style: .destructive, title: "Delete") { action, indexPath in
+            // handle action by updating model with deletion
+            if let categoryForDeletion = self.categoryArray?[indexPath.row]{
+                do{
+                    try self.realm.write{
+                        self.realm.delete(categoryForDeletion)
+                    }
+                }
+                catch{
+                    print("Error while deleting row,\(error)")
+                }
+            }
+        }
+        
+        
+        // customize the action appearance
+        deleteAction.image = UIImage(named: "delete-icon 1")
+        
+        return [deleteAction]
+    }
+    func tableView(_ tableView: UITableView, editActionsOptionsForRowAt indexPath: IndexPath, for orientation: SwipeActionsOrientation) -> SwipeOptions {
+        var options = SwipeOptions()
+        options.expansionStyle = .destructive
+        //options.transitionStyle = .border
+        return options
+    }
+}
+ */
+    
   //MARK: - COREDATA
   /*  func saveCategory(){
         do{
@@ -124,5 +180,6 @@ let request : NSFetchRequest<Category> = Category.fetchRequest()
            print("Error fetching data from context \(error)")
        }
        tableView.reloadData()
-   }*/
-}
+   }
+   
+ */
