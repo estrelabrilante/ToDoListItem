@@ -7,13 +7,16 @@
 //
 
 import UIKit
-import CoreData
+//import CoreData
+import RealmSwift
 
 class ToDoListViewController: UITableViewController{
     //let defaults = UserDefaults.standard;
     @IBOutlet weak var searchBar: UISearchBar!
     //var itemArray = ["Book","Pen","Pencil"]
-    var itemArray = [Item]()
+   // var itemArray = [Item]()
+    var todoItems: Results<Item>?
+    let realm = try! Realm()
     var selectedCategory : Category?{
         didSet{
             loadItem()
@@ -24,14 +27,15 @@ class ToDoListViewController: UITableViewController{
     // let dataFilePath = FileManager.default.urls(for: .documentDirectory, in: .userDomainMask).first?.appendingPathComponent("Items.plist")
     
     //Using CoreData--AppDelegate: Coredata object
-    let context = (UIApplication.shared.delegate as! AppDelegate).persistentContainer.viewContext
+  //  let context = (UIApplication.shared.delegate as! AppDelegate).persistentContainer.viewContext
     
     @IBOutlet weak var addButton: UIBarButtonItem!
     override func viewDidLoad() {
         super.viewDidLoad()
+        
         // Do any additional setup after loading the view.
         //making IBOUTLET for UISearchBar and then setting outlet delegate as self
-        searchBar.delegate = self
+        //searchBar.delegate = self
         
         // print(dataFilePath)
         // print(FileManager.default.urls(for: .documentDirectory, in: .userDomainMask))
@@ -68,16 +72,32 @@ class ToDoListViewController: UITableViewController{
              var done: Bool = false
              }*/
             // let newItemText = Item()
+         
+            if let currentCategory = self.selectedCategory{
+                do{
+                    try self.realm.write{
+                        let newItem = Item()
+                        newItem.title = textField.text!
+                        newItem.dateCreated = Date()
+                        currentCategory.items.append(newItem)
+                    }
+                }
+                catch{
+                    print("Error,\(error)")
+                }
+            }
+            self.tableView.reloadData()
+            
+          //  newItem.title = textField.text!
+         //   newItem.done = false
+          //  newItem.parentCategory = self.selectedCategory
+         //   self.itemArray.append(newItem)
+        //self.saveItems()
             
             //context into permanaent storage inside our persistentContainer
             // let context = (UIApplication.shared.delegate as! AppDelegate).persistentContainer.viewContext
-            let newItem = Item(context: self.context)
+           // let newItem = Item(context: self.context)
             
-            newItem.title = textField.text!
-            newItem.done = false
-            newItem.parentCategory = self.selectedCategory
-            self.itemArray.append(newItem)
-            self.saveData()
             //persist data using UserDefaults -- App crash for custom object
             // self.defaults.set(self.itemArray, forKey: "TodoListArray")
             
@@ -92,17 +112,21 @@ class ToDoListViewController: UITableViewController{
     }
     //MARK: - TableViewDataSource Methods
     override func tableView(_ tableView: UITableView, numberOfRowsInSection section: Int) -> Int {
-        return itemArray.count
+        return todoItems?.count ?? 1
     }
     override func tableView(_ tableView: UITableView, cellForRowAt indexPath: IndexPath) -> UITableViewCell {
         //allocates a table view cell
-        let cell = self.tableView.dequeueReusableCell(withIdentifier: "ToDoItemCell", for: indexPath)
-        let item = itemArray[indexPath.row]
+let cell = self.tableView.dequeueReusableCell(withIdentifier: "ToDoItemCell", for: indexPath)
+        if let item = todoItems?[indexPath.row]{
         //set the text of label in the textviewcell
-        cell.textLabel?.text = item.title
-        //Ternary operator
-        //Value = condition: valueIftrue valueIfFalse
-        cell.accessoryType = item.done ? .checkmark : .none
+            cell.textLabel?.text = item.title
+            //Ternary operator
+    //Value = condition: valueIftrue valueIfFalse
+ cell.accessoryType = item.done ? .checkmark : .none
+        }
+        else{
+            cell.textLabel?.text = "No item added"
+        }
         /*if item.done == true{
          cell.accessoryType = .checkmark
          }
@@ -119,7 +143,7 @@ class ToDoListViewController: UITableViewController{
         //DELETE from array
         //  itemArray.remove(at: indexPath.row)
         //UPDATE "done" property
-        itemArray[indexPath.row].done = !itemArray[indexPath.row].done
+       // todoItems[indexPath.row].done = !todoItems[indexPath.row].done
         //*************************************
         /* if itemArray[indexPath.row].done == false{
          itemArray[indexPath.row].done = true
@@ -127,7 +151,7 @@ class ToDoListViewController: UITableViewController{
          else{
          itemArray[indexPath.row].done = false
          }*/
-        saveData()
+       // saveData()
         // tableView.reloadData()
         /* if let cellSelect = tableView.cellForRow(at: indexPath){
          if cellSelect.accessoryType == .checkmark{
@@ -137,13 +161,31 @@ class ToDoListViewController: UITableViewController{
          cellSelect.accessoryType = .checkmark
          }
          }*/
-        // ***************************************
+        // ***************************************uPDATE --REALM
+        if let item = todoItems?[indexPath.row]{
+            do{
+                try realm.write{
+                    item.done = !item.done
+                    //Delete from realm
+                    //relam.delete(item)
+                }
+            }
+            catch{
+                print("Error saving done status,\(error)")
+            }
+        }
+        tableView.reloadData()
         //change the background of the cell
         tableView.deselectRow(at: indexPath, animated: true)
         //tableView.cellForRow(at: indexPath)?.accessoryType = .checkmark
     }
-    //MARK: - Model Manipulation Methods -- coredata
-    func saveData(){
+    //MARK: - Model Manipulation Methods
+    //Realm -- load/Read data
+     func loadItem() {
+         todoItems = selectedCategory?.items.sorted(byKeyPath: "title",ascending: true)
+    }
+    // coredata
+   /* func saveData(){
         do{
             // let context = (UIApplication.shared.delegate as! AppDelegate).persistentContainer.viewContext
             try context.save()
@@ -172,12 +214,22 @@ class ToDoListViewController: UITableViewController{
         }
         tableView.reloadData()
     }
-    
+  */
     
 }
+
     //MARK: - UISearchBarDelegate delegate method
+extension ToDoListViewController:UISearchBarDelegate{
+    func searchBarSearchButtonClicked(_ searchBar: UISearchBar) {
+        todoItems = todoItems?.filter("title CONTAINS[cd] %@", searchBar.text!).sorted(byKeyPath: "dateCreated",ascending: true)
+        tableView.reloadData()
+    }
+}
+
+
+//using coredate
     
-    extension ToDoListViewController: UISearchBarDelegate{
+ /*   extension ToDoListViewController: UISearchBarDelegate{
         //querying data
         func searchBarSearchButtonClicked(_ searchBar: UISearchBar) {
             //new request
@@ -201,7 +253,7 @@ class ToDoListViewController: UITableViewController{
                 }
             }
         }
-}
+}*/
     
 //MARK: - Encoding data with NSEncoder
 /* func saveData(){
@@ -214,8 +266,10 @@ class ToDoListViewController: UITableViewController{
  print("Error encoding data \(error)")
  }
  self.tableView.reloadData();
- }*/
-/*func loadItem(){
+ }
+ */
+/*
+ func loadItem(){
  if let data = try? Data(contentsOf: dataFilePath!){
  let decoder = PropertyListDecoder()
  do{
