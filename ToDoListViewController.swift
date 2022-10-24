@@ -9,12 +9,13 @@
 import UIKit
 //import CoreData
 import RealmSwift
+import ChameleonFramework
 
-class ToDoListViewController: UITableViewController{
+class ToDoListViewController: SwipeTableViewController{
     //let defaults = UserDefaults.standard;
     @IBOutlet weak var searchBar: UISearchBar!
     //var itemArray = ["Book","Pen","Pencil"]
-   // var itemArray = [Item]()
+    // var itemArray = [Item]()
     var todoItems: Results<Item>?
     let realm = try! Realm()
     var selectedCategory : Category?{
@@ -27,7 +28,7 @@ class ToDoListViewController: UITableViewController{
     // let dataFilePath = FileManager.default.urls(for: .documentDirectory, in: .userDomainMask).first?.appendingPathComponent("Items.plist")
     
     //Using CoreData--AppDelegate: Coredata object
-  //  let context = (UIApplication.shared.delegate as! AppDelegate).persistentContainer.viewContext
+    //  let context = (UIApplication.shared.delegate as! AppDelegate).persistentContainer.viewContext
     
     @IBOutlet weak var addButton: UIBarButtonItem!
     override func viewDidLoad() {
@@ -72,7 +73,7 @@ class ToDoListViewController: UITableViewController{
              var done: Bool = false
              }*/
             // let newItemText = Item()
-         
+            
             if let currentCategory = self.selectedCategory{
                 do{
                     try self.realm.write{
@@ -88,15 +89,15 @@ class ToDoListViewController: UITableViewController{
             }
             self.tableView.reloadData()
             
-          //  newItem.title = textField.text!
-         //   newItem.done = false
-          //  newItem.parentCategory = self.selectedCategory
-         //   self.itemArray.append(newItem)
-        //self.saveItems()
+            //  newItem.title = textField.text!
+            //   newItem.done = false
+            //  newItem.parentCategory = self.selectedCategory
+            //   self.itemArray.append(newItem)
+            //self.saveItems()
             
             //context into permanaent storage inside our persistentContainer
             // let context = (UIApplication.shared.delegate as! AppDelegate).persistentContainer.viewContext
-           // let newItem = Item(context: self.context)
+            // let newItem = Item(context: self.context)
             
             //persist data using UserDefaults -- App crash for custom object
             // self.defaults.set(self.itemArray, forKey: "TodoListArray")
@@ -116,13 +117,25 @@ class ToDoListViewController: UITableViewController{
     }
     override func tableView(_ tableView: UITableView, cellForRowAt indexPath: IndexPath) -> UITableViewCell {
         //allocates a table view cell
-let cell = self.tableView.dequeueReusableCell(withIdentifier: "ToDoItemCell", for: indexPath)
+        //let cell = self.tableView.dequeueReusableCell(withIdentifier: "ToDoItemCell", for: indexPath)
+        let cell = super.tableView(tableView, cellForRowAt: indexPath)
         if let item = todoItems?[indexPath.row]{
-        //set the text of label in the textviewcell
+            //set the text of label in the textviewcell
             cell.textLabel?.text = item.title
+            //to change background colour of cell as per colour of category colour
+           /* if let colour = FlatSkyBlue().darken(byPercentage: CGFloat(indexPath.row)/CGFloat(todoItems!.count)){            //currently on 5th row = indexPath.row
+                //total of 10 items in itemArray/todoItems = todoitems.count
+                cell.backgroundColor = colour
+                cell.textLabel?.textColor = ContrastColorOf(colour, returnFlat: true)
+            }*/
+            if let colour = UIColor(hexString: selectedCategory!.colourString)?.darken(byPercentage: CGFloat(indexPath.row)/CGFloat(todoItems!.count)){            //currently on 5th row = indexPath.row
+                //total of 10 items in itemArray/todoItems = todoitems.count
+                cell.backgroundColor = colour
+                cell.textLabel?.textColor = ContrastColorOf(colour, returnFlat: true)
+            }
             //Ternary operator
-    //Value = condition: valueIftrue valueIfFalse
- cell.accessoryType = item.done ? .checkmark : .none
+            //Value = condition: valueIftrue valueIfFalse
+            cell.accessoryType = item.done ? .checkmark : .none
         }
         else{
             cell.textLabel?.text = "No item added"
@@ -138,36 +151,11 @@ let cell = self.tableView.dequeueReusableCell(withIdentifier: "ToDoItemCell", fo
     }
     //MARK: - TableViewDelegate Methods
     override func tableView(_ tableView: UITableView, didSelectRowAt indexPath: IndexPath) {
-        //DELETE from Container
-        // context.delete(itemArray[indexPath.row])
-        //DELETE from array
-        //  itemArray.remove(at: indexPath.row)
-        //UPDATE "done" property
-       // todoItems[indexPath.row].done = !todoItems[indexPath.row].done
-        //*************************************
-        /* if itemArray[indexPath.row].done == false{
-         itemArray[indexPath.row].done = true
-         }
-         else{
-         itemArray[indexPath.row].done = false
-         }*/
-       // saveData()
-        // tableView.reloadData()
-        /* if let cellSelect = tableView.cellForRow(at: indexPath){
-         if cellSelect.accessoryType == .checkmark{
-         cellSelect.accessoryType = .none
-         }
-         else{
-         cellSelect.accessoryType = .checkmark
-         }
-         }*/
-        // ***************************************uPDATE --REALM
         if let item = todoItems?[indexPath.row]{
             do{
                 try realm.write{
-                    item.done = !item.done
-                    //Delete from realm
-                    //relam.delete(item)
+                item.done = !item.done
+                   
                 }
             }
             catch{
@@ -178,47 +166,93 @@ let cell = self.tableView.dequeueReusableCell(withIdentifier: "ToDoItemCell", fo
         //change the background of the cell
         tableView.deselectRow(at: indexPath, animated: true)
         //tableView.cellForRow(at: indexPath)?.accessoryType = .checkmark
+        
+        
+        
+        //DELETE from Container
+        // context.delete(itemArray[indexPath.row])
+        //DELETE from array
+        //  itemArray.remove(at: indexPath.row)
+        //UPDATE "done" property
+        // todoItems[indexPath.row].done = !todoItems[indexPath.row].done
+        //*************************************
+        /* if itemArray[indexPath.row].done == false{
+         itemArray[indexPath.row].done = true
+         }
+         else{
+         itemArray[indexPath.row].done = false
+         }*/
+        // saveData()
+        // tableView.reloadData()
+        /* if let cellSelect = tableView.cellForRow(at: indexPath){
+         if cellSelect.accessoryType == .checkmark{
+         cellSelect.accessoryType = .none
+         }
+         else{
+         cellSelect.accessoryType = .checkmark
+         }
+         }*/
+        // ***************************************uPDATE --REALM
+       
+        
     }
     //MARK: - Model Manipulation Methods
     //Realm -- load/Read data
-     func loadItem() {
-         todoItems = selectedCategory?.items.sorted(byKeyPath: "title",ascending: true)
+    func loadItem() {
+        todoItems = selectedCategory?.items.sorted(byKeyPath: "title",ascending: true)
     }
-    // coredata
-   /* func saveData(){
-        do{
-            // let context = (UIApplication.shared.delegate as! AppDelegate).persistentContainer.viewContext
-            try context.save()
-            print("saved to database : Item")
-        }
-        catch{
-            print("Error while saving context \(error)")
-        }
-        self.tableView.reloadData();
-    }
-    func loadItem(with request : NSFetchRequest<Item> = Item.fetchRequest(), predicate:NSPredicate? = nil){
-        let categoryPredicate = NSPredicate(format:"parentCategory.name MATCHES %@", selectedCategory!.name!)
-        
-        if let additionalPredicate = predicate{
-            request.predicate = NSCompoundPredicate(andPredicateWithSubpredicates: [categoryPredicate,additionalPredicate])
-        }else{
-            request.predicate = categoryPredicate
+    //Mark: - deletion from swipe
+override func updateModel(at indexPath: IndexPath) {
+        if let item = todoItems?[indexPath.row]{
+            do{
+                try realm.write{
+                    //Delete from realm
+                    realm.delete(item)
+                }
+            }
+            catch{
+                print("Error saving done status,\(error)")
+            }
         }
         
-        do{
-            itemArray = try context.fetch(request)
-            print("Data read: \(itemArray)")
-        }
-        catch{
-            print("Error fetching data from context \(error)")
-        }
-        tableView.reloadData()
     }
-  */
-    
-}
+    //MARK: - Coredata
+        
+        /* func saveData(){
+         do{
+         // let context = (UIApplication.shared.delegate as! AppDelegate).persistentContainer.viewContext
+         try context.save()
+         print("saved to database : Item")
+         }
+         catch{
+         print("Error while saving context \(error)")
+         }
+         self.tableView.reloadData();
+         }
+         func loadItem(with request : NSFetchRequest<Item> = Item.fetchRequest(), predicate:NSPredicate? = nil){
+         let categoryPredicate = NSPredicate(format:"parentCategory.name MATCHES %@", selectedCategory!.name!)
+         
+         if let additionalPredicate = predicate{
+         request.predicate = NSCompoundPredicate(andPredicateWithSubpredicates: [categoryPredicate,additionalPredicate])
+         }else{
+         request.predicate = categoryPredicate
+         }
+         
+         do{
+         itemArray = try context.fetch(request)
+         print("Data read: \(itemArray)")
+         }
+         catch{
+         print("Error fetching data from context \(error)")
+         }
+         tableView.reloadData()
+         }
+         */
+        
+    }
 
-    //MARK: - UISearchBarDelegate delegate method
+
+    //MARK: - UISearchBarDelegate delegate method using realm
 extension ToDoListViewController:UISearchBarDelegate{
     func searchBarSearchButtonClicked(_ searchBar: UISearchBar) {
         todoItems = todoItems?.filter("title CONTAINS[cd] %@", searchBar.text!).sorted(byKeyPath: "dateCreated",ascending: true)
@@ -226,8 +260,7 @@ extension ToDoListViewController:UISearchBarDelegate{
     }
 }
 
-
-//using coredate
+//MARK: - searchBar using coredata
     
  /*   extension ToDoListViewController: UISearchBarDelegate{
         //querying data
