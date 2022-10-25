@@ -34,6 +34,7 @@ class ToDoListViewController: SwipeTableViewController{
     override func viewDidLoad() {
         super.viewDidLoad()
         
+        
         // Do any additional setup after loading the view.
         //making IBOUTLET for UISearchBar and then setting outlet delegate as self
         //searchBar.delegate = self
@@ -58,6 +59,25 @@ class ToDoListViewController: SwipeTableViewController{
          }*/
         //retrieve data
         //loadItem()
+        
+    }
+    override func viewWillAppear(_ animated: Bool) {
+        if let colourHex = selectedCategory?.colourString{
+            title = selectedCategory!.name
+    guard let navBar = navigationController?.navigationBar
+            else
+            {
+        fatalError("Navigation controller does not exist")
+                
+            }
+            if let navColour = UIColor(hexString: colourHex){
+                navBar.barTintColor = navColour
+                searchBar.barTintColor = navColour
+                navBar.tintColor = ContrastColorOf(navColour, returnFlat: true)
+                navBar.largeTitleTextAttributes = [NSAttributedString.Key.foregroundColor:ContrastColorOf(navColour, returnFlat: true)]
+                
+            }
+        }
         
     }
     //MARK: - additem while pressing + button
@@ -132,6 +152,8 @@ class ToDoListViewController: SwipeTableViewController{
                 //total of 10 items in itemArray/todoItems = todoitems.count
                 cell.backgroundColor = colour
                 cell.textLabel?.textColor = ContrastColorOf(colour, returnFlat: true)
+                
+                
             }
             //Ternary operator
             //Value = condition: valueIftrue valueIfFalse

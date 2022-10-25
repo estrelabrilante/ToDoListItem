@@ -8,15 +8,21 @@
 
 import UIKit
 import SwipeCellKit
+import ChameleonFramework
+import RealmSwift
 
 class SwipeTableViewController: UITableViewController ,SwipeTableViewCellDelegate{
 
 override func viewDidLoad() {
         super.viewDidLoad()
-    }
+    tableView.rowHeight = 100
+    tableView.separatorStyle = .none
+}
     //MARK: - DATASOURCE METHOD
     override func tableView(_ tableView: UITableView, cellForRowAt indexPath: IndexPath) -> UITableViewCell {
         let cell1 = self.tableView.dequeueReusableCell(withIdentifier: "Cell", for: indexPath) as! SwipeTableViewCell
+        
+       
         cell1.delegate = self
         
          return cell1

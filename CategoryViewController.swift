@@ -10,6 +10,7 @@ import UIKit
 //import CoreData
 import RealmSwift
 //import SwipeCellKit
+import ChameleonFramework
 
 class CategoryViewController: SwipeTableViewController {
     let realm = try! Realm()
@@ -21,6 +22,15 @@ class CategoryViewController: SwipeTableViewController {
         //load all category
         loadCategories()
         
+    }
+    override func viewWillAppear(_ animated: Bool) {
+        guard let navBar = navigationController?.navigationBar
+                else
+                {
+            fatalError("Navigation controller does not exist")
+                    
+                }
+        navBar.backgroundColor = UIColor(hexString: "1D9BF6")
     }
     //array of NSManaged Object : created using entity
     
@@ -40,8 +50,16 @@ class CategoryViewController: SwipeTableViewController {
        // cell1.delegate = self
         //comes from super class
         let cell1 = super.tableView(tableView, cellForRowAt: indexPath)
-        cell1.textLabel?.text = categoryArray?[indexPath.row].name ?? "No categories added"
-        cell1.backgroundColor = UIColor(hexString: categoryArray?[indexPath.row].colourString ?? "1D98F6")
+        //change cell and textLabel colour
+        if let category = categoryArray?[indexPath.row]{
+           // cell1.textLabel?.text = category.name ?? "No categories added"
+            cell1.textLabel?.text = category.name
+           guard let categoryColour = UIColor(hexString: category.colourString)
+                else {fatalError("Error while contrasting")}
+            
+            cell1.backgroundColor = categoryColour
+            cell1.textLabel?.textColor = ContrastColorOf(categoryColour, returnFlat: true)
+        }
         return cell1
     }
     @IBAction func addButtonPressed(_ sender: UIBarButtonItem) {
@@ -53,6 +71,7 @@ class CategoryViewController: SwipeTableViewController {
             //  let newCategory = Category(context: self.context)
             let newCategory = Category()
             newCategory.name = textField.text!
+            //datattype: hexstring
             newCategory.colourString = UIColor.randomFlat().hexValue()
             self.save(category: newCategory)  //Write Realm
             
@@ -88,7 +107,7 @@ class CategoryViewController: SwipeTableViewController {
         self.tableView.reloadData();
     }
     func loadCategories(){
-        //pull all of Category OBject
+        //pull all of Category Object from Result container
         categoryArray = realm.objects(Category.self)
         tableView.reloadData()
     }
